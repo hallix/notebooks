@@ -58,6 +58,49 @@ md"#### Count rows"
 # ╔═╡ 02b99312-a705-4bbc-a136-bf882364315d
 @pipe loveSongs |> combine(_,nrow)
 
+# ╔═╡ 0f030e93-fa12-409b-85b3-30f8b5fa33af
+md"#### Count songs with the keyword boy or man"
+
+# ╔═╡ fc204dd4-f68e-4e84-b0a5-34b5631acce9
+begin
+	man = @pipe dataset |> subset(_,:title => ByRow(title -> occursin("man",lowercase(title))))
+	boy = @pipe dataset |> subset(_,:title => ByRow(title -> occursin("boy",lowercase(title))))
+	male =@pipe vcat(man,boy) |> combine(_,nrow=>:male)
+end
+
+# ╔═╡ 487de9cf-f51c-441d-a426-d2bc6d0ee3f3
+md"#### Count songs with the keyword girl or woman"
+
+# ╔═╡ b74d64a1-0343-4a78-b3b4-37ca0a2b13e1
+begin
+	woman = @pipe dataset |> subset(_,:title => ByRow(title -> occursin("woman",lowercase(title))))
+	girl = @pipe dataset |> subset(_,:title => ByRow(title -> occursin("girl",lowercase(title))))
+	female = @pipe vcat(woman,girl) |> combine(_,nrow=>:female)
+end
+
+# ╔═╡ 5be29173-5e01-4fd0-bb8d-e19312ca8ea6
+md"#### Concat counts,transpose and add new columns"
+
+# ╔═╡ 0b6b3d5f-c0eb-4029-bfab-4a4efeb2540e
+begin
+	gender = hcat(male,female)
+	genderMatrix = Matrix(gender)
+	genderMatrixNames= names(gender)
+	dGender= hcat(genderMatrixNames, genderMatrix')
+	transposedGender = DataFrame(dGender,["gender","count"])
+end
+
+# ╔═╡ 20dc71f4-9130-4b7a-ae0f-907105fed359
+md"#### Visualize gender keyword data"
+
+# ╔═╡ 0e1c7e14-468f-42ba-aee8-edbd0088229f
+transposedGender |> @vlplot(
+							:bar,
+							encoding={
+					        x={field=:gender, type="ordinal"},
+					        y={field=:count, type="quantitative"}
+						})
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -556,5 +599,13 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═5b2723dd-3f71-4d49-a95a-b535a0eb74c4
 # ╟─aeae519a-1e15-46e1-a341-ec298ad91542
 # ╠═02b99312-a705-4bbc-a136-bf882364315d
+# ╟─0f030e93-fa12-409b-85b3-30f8b5fa33af
+# ╠═fc204dd4-f68e-4e84-b0a5-34b5631acce9
+# ╟─487de9cf-f51c-441d-a426-d2bc6d0ee3f3
+# ╠═b74d64a1-0343-4a78-b3b4-37ca0a2b13e1
+# ╟─5be29173-5e01-4fd0-bb8d-e19312ca8ea6
+# ╠═0b6b3d5f-c0eb-4029-bfab-4a4efeb2540e
+# ╟─20dc71f4-9130-4b7a-ae0f-907105fed359
+# ╠═0e1c7e14-468f-42ba-aee8-edbd0088229f
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
