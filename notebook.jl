@@ -5,22 +5,10 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ 7932be38-8e27-4974-bb84-9119d44b6238
-using DataFrames
-
-# ╔═╡ 334ac826-720c-413c-a82f-b178cbaec07c
-using CSV
-
-# ╔═╡ f23ea0ff-76d4-479f-915f-9d55f3ca4ff7
-using Pipe
-
-# ╔═╡ d5478d95-cb2b-4b58-94cd-47d2e42d31d7
-using VegaLite
+using DataFrames,CSV, Pipe,VegaLite, StatsBase
 
 # ╔═╡ c294b40e-3a71-41c4-94da-7c102cb9aece
 dataset = DataFrame(CSV.File("dataset.csv")) |> dropmissing
-
-# ╔═╡ 76ac1e82-924d-42a1-9aec-78673ad849db
-
 
 # ╔═╡ cf2173f3-05bc-4b68-a391-a04c93f69f28
 begin
@@ -29,229 +17,46 @@ begin
 end
 
 # ╔═╡ b4170d5b-9fe6-4db7-8d16-6a4d03b86a12
-#Group music by top year
+md"#### Group music by top year"
 
 # ╔═╡ 00d5a3bb-ae5d-4b53-9d20-22ca5d5f4f50
 year_trend = @pipe dataset |> groupby(_,:year_released)|> combine(_,nrow => :count)
 
-# ╔═╡ dfc51d83-566f-4d5a-bed8-4a65fdf59e54
-
-
 # ╔═╡ fd58fe96-aa96-4670-96d3-71fd48bdfc93
-
+md"#### Visualize the data using a bar chart"
 
 # ╔═╡ f99e4330-d1d2-4b3b-853a-2b79142a1b83
-year_trend |>
-	@vlplot(
-		:bar,
-		encoding={
-        x={field=:year_released, type="ordinal"},
-        y={field=:count, type="quantitative"}
-	})
+year_trend |> @vlplot(
+						:bar,
+						encoding={
+				        x={field=:year_released, type="ordinal"},
+				        y={field=:count, type="quantitative"}
+					})
 
 # ╔═╡ 1382a200-8c50-48e3-bb7e-a8c45462b6d9
-
+md"#### Group music by genre and get mode year for each group"
 
 # ╔═╡ 32daaa4c-6970-4de3-8b18-0a97d47437b4
+genreGrouped = @pipe dataset |> groupby(_,:top_genre) |> 
+combine(_, nrow => :count,:year_released => mode => :mode_year)
 
+# ╔═╡ a8491a4a-e239-42c1-96f2-2d1c899df8bc
+md"#### Top genre"
 
-# ╔═╡ 059ed042-365d-4633-8b27-9180907b124b
+# ╔═╡ 0bb03adb-56ad-4bee-a67b-3395432dd917
+@pipe genreGrouped |> subset(_, :count => count -> count .== maximum(count)) 
 
+# ╔═╡ 9b0e7482-e3d0-4c88-93b0-06c1a3b6d5b7
+md"#### Find music with the keyword love"
 
-# ╔═╡ a3a6aff6-2ac4-45b2-9b1b-8d14593470a4
+# ╔═╡ 5b2723dd-3f71-4d49-a95a-b535a0eb74c4
+loveSongs = @pipe dataset |> subset(_,:title => ByRow(title -> occursin("love",lowercase(title))))
 
+# ╔═╡ aeae519a-1e15-46e1-a341-ec298ad91542
+md"#### Count rows"
 
-# ╔═╡ 3aee89c8-68b8-4858-9c26-adce17657936
-
-
-# ╔═╡ 265a459a-b18f-4c49-a8bb-6fe72176ee91
-
-
-# ╔═╡ 5c4e5425-09fd-48ef-b038-c0f114728a17
-
-
-# ╔═╡ d7311ddb-f22d-4182-a35a-3a8a1bb77dc3
-
-
-# ╔═╡ cb255b81-65ed-4b06-9737-3c79884e30db
-
-
-# ╔═╡ 6e139c47-8531-4d9a-8df0-ee349db45968
-
-
-# ╔═╡ 19ea8a25-e149-4041-bbca-c7661e1e2c4f
-
-
-# ╔═╡ f6da6e02-c12b-4b02-bf20-25296f659b22
-
-
-# ╔═╡ 9dd43bfd-afd7-46c7-a92f-664c3d45c25c
-
-
-# ╔═╡ a9057d07-64b5-4356-a3f4-1205b3ec8eb1
-
-
-# ╔═╡ f394baa1-9ac9-459c-9a7f-80d6a6a0c888
-
-
-# ╔═╡ 38afa734-9e36-4466-974c-b3dcde1b215e
-
-
-# ╔═╡ d049c8ac-9b12-4905-9685-764aed86bb91
-
-
-# ╔═╡ 8bbd65d3-859d-4865-847d-524e51c0093c
-
-
-# ╔═╡ 304c9ccf-4dfd-4ae9-86c4-63c1f1b2c824
-
-
-# ╔═╡ e18fbd19-7c33-4ef2-aaa9-281f206bc82e
-
-
-# ╔═╡ ce5e667a-a326-4c4b-ad45-371e1c8c875b
-
-
-# ╔═╡ 1f0792ad-a02a-4c17-97c5-b6bf843cd158
-
-
-# ╔═╡ e8bbb880-a3bb-41b8-9c65-6c3111772a20
-
-
-# ╔═╡ 38889942-aa5f-4a3a-8b2e-22de8bdb077e
-
-
-# ╔═╡ a616f640-a34f-4585-9a39-e15deebd6ace
-
-
-# ╔═╡ 973ebd13-71e5-4f9c-a34c-1a8a6b704abf
-
-
-# ╔═╡ 5e30c00d-714d-499d-94cd-fe6594c0e297
-
-
-# ╔═╡ ca79452f-62f6-4f98-a6f1-b038bb29678b
-
-
-# ╔═╡ 027e21a4-1447-4248-8747-39ee45a19261
-
-
-# ╔═╡ ecc8f789-caf2-4d82-a768-09347acbc120
-
-
-# ╔═╡ 3a911179-6784-4353-b9e8-c933d48016c5
-
-
-# ╔═╡ d14063ea-7049-46d0-a100-6a9db43870cc
-
-
-# ╔═╡ 799ad4f1-9770-47e8-a05a-2d63b939777f
-
-
-# ╔═╡ 03e1b7eb-9aad-4a6f-93d9-01aa3f15fd9c
-
-
-# ╔═╡ baaa2f37-a120-4cfd-a3e0-98012039b073
-
-
-# ╔═╡ ad95292b-af20-4661-9f3b-772d00087824
-
-
-# ╔═╡ 3d6d5071-9be7-4b00-83df-66af58a572fe
-
-
-# ╔═╡ d9ec3f56-a83d-4ab3-aafe-50085f0fbb9f
-
-
-# ╔═╡ 376d9664-439a-495a-9c51-a3fffedf632a
-
-
-# ╔═╡ afacfc10-5be5-40cf-bed6-be74764631f7
-
-
-# ╔═╡ 88cc2521-bdde-4bc5-a5a6-7cdb62aca414
-
-
-# ╔═╡ ab0b0fd5-a144-45a4-ab1d-7ec9b09a6b5e
-
-
-# ╔═╡ b918be78-f23c-4d65-8fc1-82b46c4e101b
-
-
-# ╔═╡ 4ee556fb-c27c-4375-9aaa-b71b0257751f
-
-
-# ╔═╡ a09b03db-dcdb-4c9d-b438-91e1810a6b3a
-
-
-# ╔═╡ 6a58c21f-0980-4ab0-a590-969edf3146d6
-
-
-# ╔═╡ 828b6953-c8a1-4a30-b5a7-a4face5fba60
-
-
-# ╔═╡ a2fff935-6d20-451b-a448-5519b39890b7
-
-
-# ╔═╡ 4476df2f-b204-4287-82ca-459ff3f3bdba
-
-
-# ╔═╡ cebf0eb2-e80c-45ca-9515-301924bf1e9b
-
-
-# ╔═╡ f1a78e4c-e13c-461c-95c8-531b1e48ed36
-
-
-# ╔═╡ f9d08f76-dd09-41fa-88f6-e70649c71066
-
-
-# ╔═╡ 8a6ad7b4-81e9-4d7e-803e-5b276e96fd51
-
-
-# ╔═╡ 8b3d9a60-5719-4ce6-8e44-20cd2f10c8a4
-
-
-# ╔═╡ 97e4972b-7089-4445-ac39-efa3739eff95
-
-
-# ╔═╡ 31ad5836-a49c-420f-b5e5-cdc1d3b395b0
-
-
-# ╔═╡ 7d6f02eb-128a-4c09-9c3f-6d3f4ada3be7
-
-
-# ╔═╡ 406851aa-791a-4e40-a866-b46301c66041
-
-
-# ╔═╡ 10a1beb0-cbb6-422e-ab0a-b00feb4d7246
-
-
-# ╔═╡ 71206b5d-7ef4-4ad9-8248-f2d3ea66ecc4
-
-
-# ╔═╡ 9a1f4e59-f639-4c28-8ae4-0ba7784976e6
-
-
-# ╔═╡ 6c76fd14-3624-493c-b7bc-92f4d04dd028
-
-
-# ╔═╡ 320fed57-31bf-489c-ad14-6394c0f34786
-
-
-# ╔═╡ 9f916a25-9b49-4900-9998-4ad76d669db2
-
-
-# ╔═╡ 8b987aef-13c2-4b89-9173-c24a97935c64
-
-
-# ╔═╡ 5395a886-96d5-4a99-a942-4fc06463cc59
-
-
-# ╔═╡ a24ec33f-8224-4152-bd9b-b7d4452d0d18
-
-
-# ╔═╡ f6272153-00e9-46e6-98b0-957fb5b5900e
-
+# ╔═╡ 02b99312-a705-4bbc-a136-bf882364315d
+@pipe loveSongs |> combine(_,nrow)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -259,12 +64,14 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Pipe = "b98c9c47-44ae-5843-9183-064241ee97a0"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 VegaLite = "112f6efa-9a02-5b7d-90c0-432ed331239a"
 
 [compat]
 CSV = "~0.10.4"
 DataFrames = "~1.3.4"
 Pipe = "~1.3.0"
+StatsBase = "~0.33.16"
 VegaLite = "~2.6.0"
 """
 
@@ -289,6 +96,18 @@ deps = ["CodecZlib", "Dates", "FilePathsBase", "InlineStrings", "Mmap", "Parsers
 git-tree-sha1 = "873fb188a4b9d76549b81465b1f75c82aaf59238"
 uuid = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 version = "0.10.4"
+
+[[deps.ChainRulesCore]]
+deps = ["Compat", "LinearAlgebra", "SparseArrays"]
+git-tree-sha1 = "9489214b993cd42d17f44c36e359bf6a7c919abf"
+uuid = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
+version = "1.15.0"
+
+[[deps.ChangesOfVariables]]
+deps = ["ChainRulesCore", "LinearAlgebra", "Test"]
+git-tree-sha1 = "1e315e3f4b0b7ce40feded39c73049692126cf53"
+uuid = "9e997f8a-9a97-42d5-a9f1-ce6bfc15e2c0"
+version = "0.1.3"
 
 [[deps.CodecZlib]]
 deps = ["TranscodingStreams", "Zlib_jll"]
@@ -357,6 +176,12 @@ uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 deps = ["Random", "Serialization", "Sockets"]
 uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
+[[deps.DocStringExtensions]]
+deps = ["LibGit2"]
+git-tree-sha1 = "b19534d1895d702889b219c382a6e18010797f0b"
+uuid = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
+version = "0.8.6"
+
 [[deps.Downloads]]
 deps = ["ArgTools", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
@@ -410,10 +235,21 @@ version = "1.1.2"
 deps = ["Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 
+[[deps.InverseFunctions]]
+deps = ["Test"]
+git-tree-sha1 = "336cc738f03e069ef2cac55a104eb823455dca75"
+uuid = "3587e190-3f89-42d0-90ee-14403ec27112"
+version = "0.1.4"
+
 [[deps.InvertedIndices]]
 git-tree-sha1 = "bee5f1ef5bf65df56bdd2e40447590b272a5471f"
 uuid = "41ab1584-1d38-5bbf-9106-f11c6c58b48f"
 version = "1.1.0"
+
+[[deps.IrrationalConstants]]
+git-tree-sha1 = "7fd44fd4ff43fc60815f8e764c0f352b83c49151"
+uuid = "92d709cd-6900-40b7-9082-c6be49f344b6"
+version = "0.1.1"
 
 [[deps.IteratorInterfaceExtensions]]
 git-tree-sha1 = "a3f24677c21f5bbe9d2a714f95dcd58337fb2856"
@@ -454,6 +290,12 @@ uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 [[deps.LinearAlgebra]]
 deps = ["Libdl", "libblastrampoline_jll"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+
+[[deps.LogExpFunctions]]
+deps = ["ChainRulesCore", "ChangesOfVariables", "DocStringExtensions", "InverseFunctions", "IrrationalConstants", "LinearAlgebra"]
+git-tree-sha1 = "09e4b894ce6a976c354a69041a04748180d43637"
+uuid = "2ab3a3ac-af41-5b50-aa03-7779005ae688"
+version = "0.3.15"
 
 [[deps.Logging]]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
@@ -597,6 +439,18 @@ uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 deps = ["LinearAlgebra", "SparseArrays"]
 uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
+[[deps.StatsAPI]]
+deps = ["LinearAlgebra"]
+git-tree-sha1 = "c82aaa13b44ea00134f8c9c89819477bd3986ecd"
+uuid = "82ae8749-77ed-4fe6-ae5f-f523153014b0"
+version = "1.3.0"
+
+[[deps.StatsBase]]
+deps = ["DataAPI", "DataStructures", "LinearAlgebra", "LogExpFunctions", "Missings", "Printf", "Random", "SortingAlgorithms", "SparseArrays", "Statistics", "StatsAPI"]
+git-tree-sha1 = "8977b17906b0a1cc74ab2e3a05faa16cf08a8291"
+uuid = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+version = "0.33.16"
+
 [[deps.TOML]]
 deps = ["Dates"]
 uuid = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
@@ -688,84 +542,19 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 
 # ╔═╡ Cell order:
 # ╠═7932be38-8e27-4974-bb84-9119d44b6238
-# ╠═334ac826-720c-413c-a82f-b178cbaec07c
-# ╠═f23ea0ff-76d4-479f-915f-9d55f3ca4ff7
-# ╠═d5478d95-cb2b-4b58-94cd-47d2e42d31d7
 # ╠═c294b40e-3a71-41c4-94da-7c102cb9aece
-# ╠═76ac1e82-924d-42a1-9aec-78673ad849db
 # ╠═cf2173f3-05bc-4b68-a391-a04c93f69f28
-# ╠═b4170d5b-9fe6-4db7-8d16-6a4d03b86a12
+# ╟─b4170d5b-9fe6-4db7-8d16-6a4d03b86a12
 # ╠═00d5a3bb-ae5d-4b53-9d20-22ca5d5f4f50
-# ╠═dfc51d83-566f-4d5a-bed8-4a65fdf59e54
-# ╠═fd58fe96-aa96-4670-96d3-71fd48bdfc93
+# ╟─fd58fe96-aa96-4670-96d3-71fd48bdfc93
 # ╠═f99e4330-d1d2-4b3b-853a-2b79142a1b83
-# ╠═1382a200-8c50-48e3-bb7e-a8c45462b6d9
+# ╟─1382a200-8c50-48e3-bb7e-a8c45462b6d9
 # ╠═32daaa4c-6970-4de3-8b18-0a97d47437b4
-# ╠═059ed042-365d-4633-8b27-9180907b124b
-# ╠═a3a6aff6-2ac4-45b2-9b1b-8d14593470a4
-# ╠═3aee89c8-68b8-4858-9c26-adce17657936
-# ╠═265a459a-b18f-4c49-a8bb-6fe72176ee91
-# ╠═5c4e5425-09fd-48ef-b038-c0f114728a17
-# ╠═d7311ddb-f22d-4182-a35a-3a8a1bb77dc3
-# ╠═cb255b81-65ed-4b06-9737-3c79884e30db
-# ╠═6e139c47-8531-4d9a-8df0-ee349db45968
-# ╠═19ea8a25-e149-4041-bbca-c7661e1e2c4f
-# ╠═f6da6e02-c12b-4b02-bf20-25296f659b22
-# ╠═9dd43bfd-afd7-46c7-a92f-664c3d45c25c
-# ╠═a9057d07-64b5-4356-a3f4-1205b3ec8eb1
-# ╠═f394baa1-9ac9-459c-9a7f-80d6a6a0c888
-# ╠═38afa734-9e36-4466-974c-b3dcde1b215e
-# ╠═d049c8ac-9b12-4905-9685-764aed86bb91
-# ╠═8bbd65d3-859d-4865-847d-524e51c0093c
-# ╠═304c9ccf-4dfd-4ae9-86c4-63c1f1b2c824
-# ╠═e18fbd19-7c33-4ef2-aaa9-281f206bc82e
-# ╠═ce5e667a-a326-4c4b-ad45-371e1c8c875b
-# ╠═1f0792ad-a02a-4c17-97c5-b6bf843cd158
-# ╠═e8bbb880-a3bb-41b8-9c65-6c3111772a20
-# ╠═38889942-aa5f-4a3a-8b2e-22de8bdb077e
-# ╠═a616f640-a34f-4585-9a39-e15deebd6ace
-# ╠═973ebd13-71e5-4f9c-a34c-1a8a6b704abf
-# ╠═5e30c00d-714d-499d-94cd-fe6594c0e297
-# ╠═ca79452f-62f6-4f98-a6f1-b038bb29678b
-# ╠═027e21a4-1447-4248-8747-39ee45a19261
-# ╠═ecc8f789-caf2-4d82-a768-09347acbc120
-# ╠═3a911179-6784-4353-b9e8-c933d48016c5
-# ╠═d14063ea-7049-46d0-a100-6a9db43870cc
-# ╠═799ad4f1-9770-47e8-a05a-2d63b939777f
-# ╠═03e1b7eb-9aad-4a6f-93d9-01aa3f15fd9c
-# ╠═baaa2f37-a120-4cfd-a3e0-98012039b073
-# ╠═ad95292b-af20-4661-9f3b-772d00087824
-# ╠═3d6d5071-9be7-4b00-83df-66af58a572fe
-# ╠═d9ec3f56-a83d-4ab3-aafe-50085f0fbb9f
-# ╠═376d9664-439a-495a-9c51-a3fffedf632a
-# ╠═afacfc10-5be5-40cf-bed6-be74764631f7
-# ╠═88cc2521-bdde-4bc5-a5a6-7cdb62aca414
-# ╠═ab0b0fd5-a144-45a4-ab1d-7ec9b09a6b5e
-# ╠═b918be78-f23c-4d65-8fc1-82b46c4e101b
-# ╠═4ee556fb-c27c-4375-9aaa-b71b0257751f
-# ╠═a09b03db-dcdb-4c9d-b438-91e1810a6b3a
-# ╠═6a58c21f-0980-4ab0-a590-969edf3146d6
-# ╠═828b6953-c8a1-4a30-b5a7-a4face5fba60
-# ╠═a2fff935-6d20-451b-a448-5519b39890b7
-# ╠═4476df2f-b204-4287-82ca-459ff3f3bdba
-# ╠═cebf0eb2-e80c-45ca-9515-301924bf1e9b
-# ╠═f1a78e4c-e13c-461c-95c8-531b1e48ed36
-# ╠═f9d08f76-dd09-41fa-88f6-e70649c71066
-# ╠═8a6ad7b4-81e9-4d7e-803e-5b276e96fd51
-# ╠═8b3d9a60-5719-4ce6-8e44-20cd2f10c8a4
-# ╠═97e4972b-7089-4445-ac39-efa3739eff95
-# ╠═31ad5836-a49c-420f-b5e5-cdc1d3b395b0
-# ╠═7d6f02eb-128a-4c09-9c3f-6d3f4ada3be7
-# ╠═406851aa-791a-4e40-a866-b46301c66041
-# ╠═10a1beb0-cbb6-422e-ab0a-b00feb4d7246
-# ╠═71206b5d-7ef4-4ad9-8248-f2d3ea66ecc4
-# ╠═9a1f4e59-f639-4c28-8ae4-0ba7784976e6
-# ╠═6c76fd14-3624-493c-b7bc-92f4d04dd028
-# ╠═320fed57-31bf-489c-ad14-6394c0f34786
-# ╠═9f916a25-9b49-4900-9998-4ad76d669db2
-# ╠═8b987aef-13c2-4b89-9173-c24a97935c64
-# ╠═5395a886-96d5-4a99-a942-4fc06463cc59
-# ╠═a24ec33f-8224-4152-bd9b-b7d4452d0d18
-# ╠═f6272153-00e9-46e6-98b0-957fb5b5900e
+# ╟─a8491a4a-e239-42c1-96f2-2d1c899df8bc
+# ╠═0bb03adb-56ad-4bee-a67b-3395432dd917
+# ╟─9b0e7482-e3d0-4c88-93b0-06c1a3b6d5b7
+# ╠═5b2723dd-3f71-4d49-a95a-b535a0eb74c4
+# ╟─aeae519a-1e15-46e1-a341-ec298ad91542
+# ╠═02b99312-a705-4bbc-a136-bf882364315d
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
