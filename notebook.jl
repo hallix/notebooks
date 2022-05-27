@@ -7,6 +7,9 @@ using InteractiveUtils
 # ╔═╡ 7932be38-8e27-4974-bb84-9119d44b6238
 using DataFrames,CSV, Pipe,VegaLite, StatsBase
 
+# ╔═╡ d1a0e81d-3b2b-4336-9d76-d4740df26a0d
+#ENV["COLUMNS"] = 1000
+
 # ╔═╡ c294b40e-3a71-41c4-94da-7c102cb9aece
 dataset = DataFrame(CSV.File("dataset.csv")) |> dropmissing
 
@@ -34,11 +37,17 @@ year_trend |> @vlplot(
 					})
 
 # ╔═╡ 1382a200-8c50-48e3-bb7e-a8c45462b6d9
-md"#### Group music by genre and get mode year for each group"
+md"#### Group music by genre and get mode year for each group on top 10"
 
 # ╔═╡ 32daaa4c-6970-4de3-8b18-0a97d47437b4
 genreGrouped = @pipe dataset |> groupby(_,:top_genre) |> 
-combine(_, nrow => :count,:year_released => mode => :mode_year)
+combine(_, nrow => :count,:year_released => mode => :mode_year) |> sort(_,:count,rev= true)[1:10,:]
+
+# ╔═╡ e90dfd6e-7704-4f78-9a5a-510ed790d271
+md"#### Visualize data" 
+
+# ╔═╡ ec3fd390-d09a-4dad-aa7a-6f99d58f079c
+genreGrouped |> @vlplot(:arc,theta=:count, color="top_genre:n", view={stroke=nothing})
 
 # ╔═╡ a8491a4a-e239-42c1-96f2-2d1c899df8bc
 md"#### Top genre"
@@ -100,6 +109,12 @@ transposedGender |> @vlplot(
 					        x={field=:gender, type="ordinal"},
 					        y={field=:count, type="quantitative"}
 						})
+
+# ╔═╡ 392129ef-d03f-43ce-8b07-0c3b9a81f180
+topArtist = @pipe dataset |> groupby(_,:artist) |> combine(_,nrow=>:count)|> sort(_,:count,rev=true)[1:10,:]
+
+# ╔═╡ 25b1e02c-37dc-448f-9eeb-0f8fb72832f3
+
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -585,6 +600,7 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 
 # ╔═╡ Cell order:
 # ╠═7932be38-8e27-4974-bb84-9119d44b6238
+# ╠═d1a0e81d-3b2b-4336-9d76-d4740df26a0d
 # ╠═c294b40e-3a71-41c4-94da-7c102cb9aece
 # ╠═cf2173f3-05bc-4b68-a391-a04c93f69f28
 # ╟─b4170d5b-9fe6-4db7-8d16-6a4d03b86a12
@@ -593,6 +609,8 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═f99e4330-d1d2-4b3b-853a-2b79142a1b83
 # ╟─1382a200-8c50-48e3-bb7e-a8c45462b6d9
 # ╠═32daaa4c-6970-4de3-8b18-0a97d47437b4
+# ╟─e90dfd6e-7704-4f78-9a5a-510ed790d271
+# ╠═ec3fd390-d09a-4dad-aa7a-6f99d58f079c
 # ╟─a8491a4a-e239-42c1-96f2-2d1c899df8bc
 # ╠═0bb03adb-56ad-4bee-a67b-3395432dd917
 # ╟─9b0e7482-e3d0-4c88-93b0-06c1a3b6d5b7
@@ -607,5 +625,7 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═0b6b3d5f-c0eb-4029-bfab-4a4efeb2540e
 # ╟─20dc71f4-9130-4b7a-ae0f-907105fed359
 # ╠═0e1c7e14-468f-42ba-aee8-edbd0088229f
+# ╠═392129ef-d03f-43ce-8b07-0c3b9a81f180
+# ╠═25b1e02c-37dc-448f-9eeb-0f8fb72832f3
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
