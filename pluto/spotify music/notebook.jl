@@ -41,7 +41,7 @@ md"#### Group music by genre and get mode year for each group on top 10"
 
 # ╔═╡ 32daaa4c-6970-4de3-8b18-0a97d47437b4
 genreGrouped = @pipe dataset |> groupby(_,:top_genre) |> 
-combine(_, nrow => :count,:year_released => mode => :mode_year) |> sort(_,:count,rev= true)[1:10,:]
+combine(_, nrow => :count,:year_released => mode => :mode_year) |> sort(_,:count,rev= true)|> first(_,10)
 
 # ╔═╡ e90dfd6e-7704-4f78-9a5a-510ed790d271
 md"#### Visualize data" 
@@ -110,11 +110,96 @@ transposedGender |> @vlplot(
 					        y={field=:count, type="quantitative"}
 						})
 
+# ╔═╡ 27a60a18-d049-4275-9757-324536052fb6
+md"#### Top 10 artist by song count"
+
 # ╔═╡ 392129ef-d03f-43ce-8b07-0c3b9a81f180
-topArtist = @pipe dataset |> groupby(_,:artist) |> combine(_,nrow=>:count)|> sort(_,:count,rev=true)[1:10,:]
+topArtist = @pipe dataset |> groupby(_,:artist) |> combine(_,nrow=>:count)|> sort(_,:count,rev=true) |> first(_,10)
+
+# ╔═╡ 41fc1315-b1c1-452f-9b17-b1a7bbf1190d
+
 
 # ╔═╡ 25b1e02c-37dc-448f-9eeb-0f8fb72832f3
+topArtist |> @vlplot(
+    width=200,
+    height={step=16},
+    y={:artist,axis=nothing}
+) +
+@vlplot(
+    mark={:bar,color="#ddd"},
+    x={"count",axis={title="Song count"}},
+) +
+@vlplot(
+    mark={:text,align="left",x=5},
+    text="artist:n",
+    detail={aggregate="count",type="quantitative"}
+)
 
+# ╔═╡ 49e83458-870d-43fb-9aa3-b84f24f0c64a
+md"#### Type of artist"
+
+# ╔═╡ 03443fe0-fedc-4cff-9d4a-4958ad9abc2f
+artistTypeTrend = @pipe dataset |> groupby(_,[:artist_type,:year_released]) |> combine(_, nrow => :count)
+
+# ╔═╡ 39e1322a-f2a8-44e9-aebd-398d9696a283
+ artistTypeTrend |> @vlplot(
+    :line,
+    x="year_released:n",
+    y=:count,
+    color=:artist_type
+)
+
+# ╔═╡ a2f7c985-06d1-4218-889e-36ff95624c51
+md"""- Largo (very slow) is 40–60 BPM.
+- Larghetto (less slow) is 60–66 BPM.
+- Adagio (moderately slow) is 66–76 BPM.
+- Andante (walking speed) is 76–108 BPM.
+- Moderato (moderate) is 108–120 BPM.
+- Allegro (fast) is 120–168 BPM.
+- Presto (faster) is 168–200 BPM.
+- Prestissimo (even faster) is 200+ BPM"""
+
+# ╔═╡ ca3f1433-441b-445e-a0db-f3f53f4a5e29
+begin
+	bpm_cartegory = Dict(
+		"very slow" => 40:60, 
+		"less slow"=>60:66,
+		"moderately slow" => 66:76,
+		"walking speed" => 76:108,
+		"moderate" => 108:120,
+		"fast" => 120:168,
+		"faster" => 168:200,
+		"even faster"=> 200:2000
+	)
+	
+	getBpmCartegory(bpm) = filter(bmpCartMap -> bpm in last(bmpCartMap) ,bpm_cartegory) |> first |> first
+end
+
+# ╔═╡ f1acb31c-b92c-4dc6-99fe-7e65262c5ccb
+md"#### Categorized bpm"
+
+# ╔═╡ 3451d477-c3da-4c6f-adb1-013b38f672cf
+cartegorizedBpm = @pipe select(dataset,[:title,:artist,:bpm]) |> transform(_, :bpm => ByRow(bpm -> getBpmCartegory(bpm)) => :bpm_cartegory)
+
+# ╔═╡ f0dd0fcd-df67-4e61-b390-38f13bc78b0a
+md"#### Aggregated song count by bpm cartegory"
+
+# ╔═╡ 1392a5f1-3cd1-4412-b035-360e9756b978
+aggregatedBpmCartegory = @pipe cartegorizedBpm |> groupby(_,:bpm_cartegory) |> combine(_,nrow=>:count)
+
+# ╔═╡ 94960e2a-a8a8-4f73-9c2b-96cbf9aebb0b
+begin
+	colors = ["red", "green", "blue","orange","yellow","brown","purple"]
+	aggregatedBpmCartegory.color = colors
+end
+
+# ╔═╡ 55ea5e25-a814-42f5-97ee-ee35b88d77bb
+ aggregatedBpmCartegory |> @vlplot(
+    :bar,
+    x="bpm_cartegory",
+    y="count",
+    color={"color:n",scale=nothing}
+)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -625,7 +710,20 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═0b6b3d5f-c0eb-4029-bfab-4a4efeb2540e
 # ╟─20dc71f4-9130-4b7a-ae0f-907105fed359
 # ╠═0e1c7e14-468f-42ba-aee8-edbd0088229f
+# ╟─27a60a18-d049-4275-9757-324536052fb6
 # ╠═392129ef-d03f-43ce-8b07-0c3b9a81f180
+# ╠═41fc1315-b1c1-452f-9b17-b1a7bbf1190d
 # ╠═25b1e02c-37dc-448f-9eeb-0f8fb72832f3
+# ╟─49e83458-870d-43fb-9aa3-b84f24f0c64a
+# ╠═03443fe0-fedc-4cff-9d4a-4958ad9abc2f
+# ╠═39e1322a-f2a8-44e9-aebd-398d9696a283
+# ╟─a2f7c985-06d1-4218-889e-36ff95624c51
+# ╠═ca3f1433-441b-445e-a0db-f3f53f4a5e29
+# ╟─f1acb31c-b92c-4dc6-99fe-7e65262c5ccb
+# ╠═3451d477-c3da-4c6f-adb1-013b38f672cf
+# ╟─f0dd0fcd-df67-4e61-b390-38f13bc78b0a
+# ╠═1392a5f1-3cd1-4412-b035-360e9756b978
+# ╠═94960e2a-a8a8-4f73-9c2b-96cbf9aebb0b
+# ╠═55ea5e25-a814-42f5-97ee-ee35b88d77bb
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
