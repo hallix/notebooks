@@ -1,58 +1,68 @@
 using CSV, GLM, DataFrames, Pipe, Plots, StatsPlots
 
 
-df = DataFrame(CSV.File("kc_house_data.csv")) |> dropmissing
+df = @pipe DataFrame(CSV.File("kc_house_data.csv")) |> dropmissing |> select!(_,[:price, :sqft_living], :price => x-> x/10000,:sqft_living => x-> x/100,renamecols=false) |> first(_,100)
 
-finalDf = @pipe df |> select(_,[:price, :sqft_living]) |> first(_,100)
 
-@df finalDf scatter(:sqft_living,:price)
-ols = lm(@formula(price ~ sqft_living), finalDf)
+@df df plot(:sqft_living,:price,seriestype = :scatter)
 
-@df finalDf plot!(:sqft_living,predict(ols), color=:green,linewidth=3)
+ols = lm(@formula(price ~ sqft_living), df)
 
+@df df plot!(:sqft_living,predict(ols), color=:green,linewidth=3)
 
 #x
-actual_sqft =  finalDf[:,:sqft_living]
+obs_sqft = df[:,:sqft_living]
+
+#parameters
 slope=0.0 #slope
 intercept=0.0 #intercept
 
-#y=mx+b
-approxFunc(X) = intercept .+ slope * X
+#y=mx+b, hypothesis
+h(X) = intercept .+ slope * X
 
-sample_size = length(actual_sqft)
+#Initial hypothesis valuation
+prd_price = h(obs_sqft)
 
-prtcd_price = approxFunc(actual_sqft)
-actual_price = finalDf[:,:price]
+@df df plot!(:sqft_living, prd_price, color=:blue,linewidth=3)
 
-@df finalDf plot!(:sqft_living,prtcd_price, color=:blue,linewidth=3)
+m = length(obs_sqft)
 
-
-costFunc(act_price) = (1 / (2 * sample_size)) * sum((prtcd_price - act_price) .^ 2) # (1 / (2 * m)) * sum((y_hat - Y).^2)
-
-cost = costFunc(actual_price)
+obs_price = df[:,:price]
 
 
-for i in range(1,10)
-    pdFunc_intercept(act_price) = (1 / sample_size) * sum((prtcd_price - act_price))
+cost(obs_price) = (1 / (2 * m)) * sum((prd_price - obs_price) .^ 2) # (1 / (2 * m)) * sum((y_hat - Y).^2)
 
-    pdFunc_slope(act_sqft, act_price) = (1 / sample_size) * sum((prtcd_price - act_price) .* act_sqft)
+#intial cost value
+init_cost = cost(obs_price)
+println("Intila cost:$init_cost")
 
-    #learning rate:
-    learn_rt_intercept = 0.09
-    learn_rt_slope = 0.00000008
+#Partial derivatives of the cost function
+pdFunc_intercept(obs_price) = (1 / m) * sum((prd_price - obs_price))
+pdFunc_slope(obs_sqft, obs_price) = (1 / m) * sum((prd_price - obs_price) .* obs_sqft)
 
+ #learning rate:
+ learn_rt_intercept = 0.09
+ learn_rt_slope = 0.0008
+
+
+for i in range(1,500)
     #temp parameters
-    temp_slope = pdFunc_slope(actual_sqft, actual_price)
+    temp_slope = pdFunc_slope(obs_sqft, obs_price)
 
-    temp_intercept = pdFunc_intercept(actual_price)
+    temp_intercept = pdFunc_intercept(obs_price)
 
     slope -= learn_rt_slope * temp_slope
     intercept -= learn_rt_intercept * temp_intercept
-    println(`cost: $cost`)
-    println(`slope: $slope`)
-    println(`intercept: $intercept`)
 
-    prtcd_price = approxFunc(actual_sqft)
-    cost = costFunc(actual_price)
-    println(`recalc cost: $cost`)
+    prd_price = h(obs_sqft)
+    #Improved cost value
+    cost_value = cost(obs_price)
+    print("Cost:")
+    println(cost_value)  
 end
+@df df plot!(:sqft_living, prd_price, color=:yellow,linewidth=3)
+println("Done....")
+
+h([20])
+
+
