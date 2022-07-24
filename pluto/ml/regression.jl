@@ -34,7 +34,7 @@ m = length(obs_sqft)
 
 obs_price = df[:,:price]
 
-
+#cost function
 cost(obs_price) = (1 / (2 * m)) * sum((prd_price - obs_price) .^ 2) # (1 / (2 * m)) * sum((y_hat - Y).^2)
 
 #intial cost value
@@ -45,35 +45,41 @@ println("Intila cost:$init_cost")
 pdFunc_intercept(obs_price) = (1 / m) * sum((prd_price - obs_price))
 pdFunc_slope(obs_sqft, obs_price) = (1 / m) * sum((prd_price - obs_price) .* obs_sqft)
 
- #learning rate:
- learn_rt_intercept = 0.01
- learn_rt_slope = 0.00008
-slope_derivatives = []
-intercept_derivatives = []
+ #Learning rate, will require manual ajustments to find the best rate to minimize the cost function
+ learn_rt_intercept = 0.00555
+ learn_rt_slope = 0.000003
 
-for i in range(1,2000)
-    #temp parameters
+cost_history = []
+slope_history = []
+intercept_history = []
+for i in range(1,1000)
+    
+    #Temp parameters
     temp_slope = pdFunc_slope(obs_sqft, obs_price)
 
     temp_intercept = pdFunc_intercept(obs_price)
 
+    #Update parameters
     slope -= learn_rt_slope * temp_slope
     intercept -= learn_rt_intercept * temp_intercept
 
-    push!(slope_derivatives, slope)
-    push!(intercept_derivatives, intercept)
-
+    push!(slope_history, slope)
+    push!(intercept_history, intercept)
+    #Recalculate the values of predicted price with new parameters applied to the hypothesis function
     prd_price = h(obs_sqft)
     #Improved cost value
     cost_value = cost(obs_price)
+    push!(cost_history, cost_value)
     print("Cost:")
     println(cost_value)  
 end
-@df df plot!(:sqft_living, prd_price, color=:yellow,linewidth=3)
-#println("Slope derivatives:", slope_derivatives)
-println("slope derivatives:", slope_derivatives)
+
+@df df plot(:sqft_living, prd_price, color=:yellow,linewidth=3)
+
+#Plot learning performance for each parameters(slope and intercept) against the cost function
+plot(cost_history, slope_history , color=:yellow,linewidth=1)
+plot(cost_history, intercept_history , color=:yellow,linewidth=1)
+
+#Test prediction
+h([19.8])
 println("Done....")
-
-h([20])
-
-
