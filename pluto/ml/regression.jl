@@ -10,6 +10,11 @@ ols = lm(@formula(price ~ sqft_living), df)
 
 @df df plot!(:sqft_living,predict(ols), color=:green,linewidth=3)
 
+predict(ols)
+plot([1,2,3,30,5,6],[1,2,3,4,5,6], color=:green,linewidth=3)
+#Machine learning
+
+
 #x
 obs_sqft = df[:,:sqft_living]
 
@@ -41,11 +46,12 @@ pdFunc_intercept(obs_price) = (1 / m) * sum((prd_price - obs_price))
 pdFunc_slope(obs_sqft, obs_price) = (1 / m) * sum((prd_price - obs_price) .* obs_sqft)
 
  #learning rate:
- learn_rt_intercept = 0.09
- learn_rt_slope = 0.0008
+ learn_rt_intercept = 0.01
+ learn_rt_slope = 0.00008
+slope_derivatives = []
+intercept_derivatives = []
 
-
-for i in range(1,500)
+for i in range(1,2000)
     #temp parameters
     temp_slope = pdFunc_slope(obs_sqft, obs_price)
 
@@ -54,6 +60,9 @@ for i in range(1,500)
     slope -= learn_rt_slope * temp_slope
     intercept -= learn_rt_intercept * temp_intercept
 
+    push!(slope_derivatives, slope)
+    push!(intercept_derivatives, intercept)
+
     prd_price = h(obs_sqft)
     #Improved cost value
     cost_value = cost(obs_price)
@@ -61,6 +70,8 @@ for i in range(1,500)
     println(cost_value)  
 end
 @df df plot!(:sqft_living, prd_price, color=:yellow,linewidth=3)
+#println("Slope derivatives:", slope_derivatives)
+println("slope derivatives:", slope_derivatives)
 println("Done....")
 
 h([20])
