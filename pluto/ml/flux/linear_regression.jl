@@ -33,6 +33,3 @@ plot(vec(x_train),vec(y_train))
 Flux.@epochs 400 Flux.train!(loss, params,data, opt)
 
 model([1])
-
-model.weight
-model.bias

@@ -1,7 +1,7 @@
 using CSV, GLM, DataFrames, Pipe, Plots, StatsPlots
 
 
-df = @pipe DataFrame(CSV.File("kc_house_data.csv")) |> dropmissing |> select!(_,[:price, :sqft_living], :price => x-> x/10000,:sqft_living => x-> x/100,renamecols=false) |> first(_,100)
+df = @pipe DataFrame(CSV.File("../datasets/kc_house_data.csv")) |> dropmissing |> select!(_,[:price, :sqft_living], :price => x-> x/10000,:sqft_living => x-> x/100,renamecols=false) |> first(_,100)
 
 
 @df df plot(:sqft_living,:price,seriestype = :scatter)
@@ -82,4 +82,3 @@ plot(cost_history, intercept_history , color=:yellow,linewidth=1)
 
 #Test prediction
 h([19.8])
-println("Done....")
