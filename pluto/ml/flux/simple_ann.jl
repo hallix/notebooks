@@ -3,13 +3,13 @@ using Plots, Flux
 #function to add 3 numbers
 addFunc(X) = X[1] + X[2] + X[3]
 
-getRandon3Numbers() = rand(Int16,3) ./1000
+getRandom3Numbers() = rand(Int16,3) ./1000
 
 #Generate training data samples
 x_train = []
 
 for i in 1:15000
-    push!(x_train,getRandon3Numbers())
+    push!(x_train,getRandom3Numbers())
 end
 
 x_train = (hcat(x_train...))
@@ -39,7 +39,7 @@ Flux.@epochs 5000 Flux.train!(loss,ps,data,opt)
 #Generate test data
 x_test =[]
 for i in 1:5
-    push!(x_test,getRandon3Numbers())
+    push!(x_test,getRandom3Numbers())
 end
 
 #test model
