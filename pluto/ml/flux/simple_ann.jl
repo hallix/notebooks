@@ -1,6 +1,6 @@
 using Plots, Flux
 
-#function to multiply 3 numbers
+#function to add 3 numbers
 addFunc(X) = X[1] + X[2] + X[3]
 
 getRandon3Numbers() = rand(Int16,3) ./1000
@@ -22,7 +22,7 @@ end
 y_train = hcat(y_train_vec...)
 
 #model
-model = Dense(3=>1)
+model = Chain(Dense(3=>6),Dense(6=>1))
 
 ps=Flux.params(model)
 
@@ -46,8 +46,5 @@ end
 for x in x_test
     @show x
     @show model(x)
-    println("-----------------------")
+    println("---------------------------")
 end
-
-
-model([3000,1000,1000])
