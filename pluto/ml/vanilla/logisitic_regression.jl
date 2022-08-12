@@ -75,7 +75,7 @@ for i in 1:4000
 
     # recalculate cost
 
-    y_hat = h(X)
+    y_hat = h(x_train)
 end
 
 cost_value = cost()

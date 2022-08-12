@@ -22,7 +22,7 @@ end
 y_train = hcat(y_train_vec...)
 
 #model
-model = Chain(Dense(3=>6),Dense(6=>1))
+model = Chain(Dense(3=>3),Dense(3=>1))
 
 ps=Flux.params(model)
 
@@ -33,8 +33,19 @@ loss(x_train, y_train)
 opt=Adam()
 
 data=[(x_train, y_train)]
+loss_history = []
 
-Flux.@epochs 5000 Flux.train!(loss,ps,data,opt)
+epoch=1:6000
+for i in epoch
+    Flux.train!(loss,ps,data,opt)
+    loss_value = loss(x_train, y_train)
+    push!(loss_history, loss_value)
+
+    if(model([2000,3000,1000])[1] == 5999.9995)
+        println("perfect learning")
+        break
+    end    
+end
 
 #Generate test data
 x_test =[]
@@ -48,3 +59,7 @@ for x in x_test
     @show model(x)
     println("---------------------------")
 end
+
+model([2000,3000,1000])[1]
+
+#plot(epoch, loss_history)
