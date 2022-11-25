@@ -17,6 +17,8 @@ model = Chain(Dense(1 => 1), Dense(1 => 1, sigmoid))
 #Cost function for sigmoid
 loss(x, y) = Flux.Losses.binarycrossentropy(model(x), y)
 
+model(x_train)
+
 cost_value = loss(x_train, y_train)
 @show "Intial cost value: $cost_value"
 
