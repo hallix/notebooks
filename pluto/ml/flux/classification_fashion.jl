@@ -28,12 +28,23 @@ df[1,14:end]
 select!(df,Not(:category_by_Gender))
 describe(df)
 shuffled_ds = dataset[shuffle(1:nrow(dataset)),:]
+
+datasetSize = nrow(df)
+validationsetStartIndex = datasetSize * 0.7 |> round |> Int
+testDatasetStartIndex = datasetSize * 0.85 |> round |> Int
+
 intersectionRowId = length(df[!,:BrandName]) - 1000
 
-trainData = shuffled_ds[1:intersectionRowId,:]
-testData = shuffled_ds[intersectionRowId:end,:]
+trainData = shuffled_ds[1:validationsetStartIndex-1,:]
+validationData = shuffled_ds[validationsetStartIndex:testDatasetStartIndex-1,:]
+testData = shuffled_ds[testDatasetStartIndex:end,:]
+
+
 trainDfX = @pipe trainData |> _[:,1:3]
 trainDfY = @pipe trainData |> _[:,4:5]
+
+validationDfX = @pipe validationData |> _[:,1:3]
+validationDfY = @pipe validationData |> _[:,4:5]
 
 testDfX = @pipe testData |> _[:,1:3]
 testDfY = @pipe testData |> _[:,4:5]
@@ -41,12 +52,15 @@ testDfY = @pipe testData |> _[:,4:5]
 trainX = @pipe trainDfX |> Matrix |> transpose
 trainY = @pipe trainDfY |> Matrix |> transpose
 
+validationX = @pipe validationDfX |> Matrix |> transpose
+validationY = @pipe validationDfY |> Matrix |> transpose
+
 testX = @pipe testDfX |> Matrix |> transpose
 testY = @pipe testDfY |> Matrix |> transpose
 
 #Write to arrow
-Arrow.write("../datasets/trainX.arrow",trainDfX)
-Arrow.write("../datasets/trainY.arrow",trainDfY)
+Arrow.write("../datasets/trainX.arrow",vcat(trainDfX,validationDfX))
+Arrow.write("../datasets/trainY.arrow",vcat(trainDfY,validationDfY))
 Arrow.write("../datasets/testX.arrow", testDfX)
 Arrow.write("../datasets/testY.arrow", testDfY)
 
@@ -57,9 +71,7 @@ ps=Flux.params(model)
 
 loss(x,y) = Flux.Losses.binarycrossentropy(model(x), y)
 
-trainX
-trainY
-loss(trainX, trainY)
+
 
 opt=Adam(0.03)
 
@@ -79,9 +91,18 @@ Ytest_hat = @pipe [[x[1],x[2]] for x in eachcol(model(testX))] .|> onecold(_,["M
 Ytest =  @pipe [[x[1],x[2]] for x in eachcol(testY)] .|> onecold(_,["Men","Women"])
 
 accuracy = mean(Ytest .== Ytest_hat)
+
+println("Train loss:",loss(trainX, trainY))
+println("Validation loss:", loss(testX, testY))
+println("Test loss:", loss(validationX, validationY))
+
 println("accuracy:",accuracy)
 
 println("Random example test:")
 println("X",testX[:,3])
 println("Y",testY[:,3])
 println("Y'",model(testX[:,3]))
+
+x=[1,2,3,4,5,6,7,8,9,10]
+
+x[4:10]

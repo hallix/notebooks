@@ -40,7 +40,7 @@ opt = tf.keras.optimizers.Adam(learning_rate=0.05)
 model.compile(optimizer=opt, loss=loss_fn, metrics=['accuracy'])
 
 #train model
-model.fit(x_train, y_train,epochs=50, batch_size=500)
+model.fit(x_train, y_train,epochs=50, batch_size=500, validation_split=0.15)
 
 print(model.evaluate(x_test, y_test, verbose=2))
 
