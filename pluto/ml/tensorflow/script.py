@@ -2,7 +2,7 @@ import tensorflow as tf
 import pyarrow as pa
 from pyarrow import fs
 import pandas as pd
-
+import numpy as np
 
 train_X_arrow = pa.memory_map('../datasets/trainX.arrow', 'r')
 train_Y_arrow = pa.memory_map('../datasets/trainY.arrow', 'r')
@@ -15,44 +15,38 @@ x_test = pa.ipc.RecordBatchFileReader(test_X_arrow).read_all().to_pandas().to_nu
 y_test = pa.ipc.RecordBatchFileReader(test_Y_arrow).read_all().to_pandas().to_numpy()
 
 
+
 #model
 model = tf.keras.models.Sequential([
-   tf.keras.layers.Dense(3),
-   tf.keras.layers.Dense(3, activation='sigmoid'),
-   tf.keras.layers.Dense(1, activation='sigmoid'),
+   tf.keras.layers.Dense(9, activation='relu'),
+   tf.keras.layers.Dense(2, activation="softmax"),
 ])
 
 #test model
-sample_x = x_test[:1]
-sample_y = y_test[:1]
+sample_x = x_test[:10]
+sample_y = y_test[:10]
+print(sample_x)
+print(sample_y)
 
 print('Before training')
-prediction = model(sample_x).numpy()
-print('0-y\'',model(sample_x).numpy())
-print('0-y',sample_y)
-
-print('1-y\'',model(x_test[899:900]).numpy())
-print('1-y',y_test[899:900])
+print('y\'',model.predict(sample_x))
+print('y',sample_y)
 
 #define loss
-loss_fn = tf.losses.mse
-
-print(loss_fn(prediction, sample_y))
+loss_fn = tf.losses.binary_crossentropy
 
 #optimize model
-model.compile("adam", loss=loss_fn, metrics=['accuracy'])
+opt = tf.keras.optimizers.Adam(learning_rate=0.05)
+model.compile(optimizer=opt, loss=loss_fn, metrics=['accuracy'])
 
 #train model
-model.fit(x_train, y_train, epochs=4)
+model.fit(x_train, y_train,epochs=50, batch_size=500)
 
 print(model.evaluate(x_test, y_test, verbose=2))
 
 print('After training')
-print('0-y\'',model(sample_x).numpy())
-print('0-y',sample_y)
-
-print('1-y\'',model(x_test[899:900]).numpy())
-print('1-y',y_test[899:900])
+print('y\'',model(sample_x).numpy())
+print('y',sample_y)
 
 
-
+print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
