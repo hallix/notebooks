@@ -10,10 +10,12 @@ subset(_,:count => ByRow( x -> x > 1))[:,feature] |> enumerate |> [(v => round(i
 
 getObsNoCart(dfv,feature::Symbol) = @pipe groupby(df, feature) |> combine(_,nrow => :count)|> subset(_,:count => ByRow( x -> x == 1))[!,feature]
 
+extractSortedLables(feature::Symbol) = @pipe groupby(df,feature) |> combine(_,nrow) |> _[:,1] |> sort!
 #Label obs to int
-brandLabels = labelObs(dfv,:BrandName, 0.1)
-categoryLables = labelObs(dfv,:Category, 0.1)
-subCategoryLabel = labelObs(dfv,:Individual_category, 0.1)
+brandLabels = extractSortedLables(:BrandName)
+categoryLables = extractSortedLables(:Category)
+subCategoryLabel = extractSortedLables(:Individual_category)
+genderLabel = extractSortedLables(:category_by_Gender)
 
 removeBrandObs = getObsNoCart(dfv,:BrandName)
 removeIndCartObs = getObsNoCart(dfv,:Individual_category)
@@ -22,10 +24,20 @@ subset!(df,:BrandName => b -> map(x -> !(x in removeBrandObs), b))
 subset!(df,:Individual_category => b -> map(x -> !(x in removeIndCartObs), b))
 
 #select
-dataset = transform!(df,:BrandName => n -> map(x -> brandLabels[x],n),:Category => n -> map(x -> categoryLables[x],n),:Individual_category => n -> map(x -> subCategoryLabel[x],n),renamecols = false)
-dataset = transform!(df,:category_by_Gender =>ByRow( r-> onehot(r, ["Men","Women"]) .|> Float16) => [:Men,:Women],renamecols=true)
+# dataset = transform!(df,:BrandName => n -> map(x -> brandLabels[x],n),:Category => n -> map(x -> categoryLables[x],n),:Individual_category => n -> map(x -> subCategoryLabel[x],n),renamecols = false)
+# dataset = transform!(df,:category_by_Gender =>ByRow( r-> onehot(r, ["Men","Women"]) .|> Float16) => [:Men,:Women],renamecols=true)
+
+
+transform!(df,:BrandName =>ByRow( r-> onehot(r, brandLabels) .|> Int8) => brandLabels,renamecols=true)
+transform!(df,:Category =>ByRow( r-> onehot(r, categoryLables) .|> Int8) => categoryLables,renamecols=true)
+transform!(df,:Individual_category =>ByRow( r-> onehot(r, subCategoryLabel) .|> Int8) => subCategoryLabel,renamecols=true)
+transform!(df,:category_by_Gender =>ByRow( r-> onehot(r, genderLabel) .|> Int8) => genderLabel,renamecols=true)
+
+df[:,end-5:end]
+
+
 df[1,14:end]
-select!(df,Not(:category_by_Gender))
+select!(df,Not(1:4))
 describe(df)
 shuffled_ds = dataset[shuffle(1:nrow(dataset)),:]
 
@@ -33,21 +45,22 @@ datasetSize = nrow(df)
 validationsetStartIndex = datasetSize * 0.7 |> round |> Int
 testDatasetStartIndex = datasetSize * 0.85 |> round |> Int
 
-intersectionRowId = length(df[!,:BrandName]) - 1000
-
 trainData = shuffled_ds[1:validationsetStartIndex-1,:]
 validationData = shuffled_ds[validationsetStartIndex:testDatasetStartIndex-1,:]
 testData = shuffled_ds[testDatasetStartIndex:end,:]
 
+totalCols = ncol(df)
+featureIndexRange = 1:totalCols-2
+labelIndexRange = totalCols-1:totalCols
 
-trainDfX = @pipe trainData |> _[:,1:3]
-trainDfY = @pipe trainData |> _[:,4:5]
+trainDfX = @pipe trainData |> _[:,featureIndexRange]
+trainDfY = @pipe trainData |> _[:,labelIndexRange]
 
-validationDfX = @pipe validationData |> _[:,1:3]
-validationDfY = @pipe validationData |> _[:,4:5]
+validationDfX = @pipe validationData |> _[:,featureIndexRange]
+validationDfY = @pipe validationData |> _[:,labelIndexRange]
 
-testDfX = @pipe testData |> _[:,1:3]
-testDfY = @pipe testData |> _[:,4:5]
+testDfX = @pipe testData |> _[:,featureIndexRange]
+testDfY = @pipe testData |> _[:,labelIndexRange]
 
 trainX = @pipe trainDfX |> Matrix |> transpose
 trainY = @pipe trainDfY |> Matrix |> transpose
@@ -65,7 +78,7 @@ Arrow.write("../datasets/testX.arrow", testDfX)
 Arrow.write("../datasets/testY.arrow", testDfY)
 
 #model
-model = Chain(Dense(3=>9, relu),Dense(9=>2),softmax)
+model = Chain(Dense(1345=>8, relu),Dense(8=>2),softmax)
 
 ps=Flux.params(model)
 
@@ -73,9 +86,9 @@ loss(x,y) = Flux.Losses.binarycrossentropy(model(x), y)
 
 
 
-opt=Adam(0.03)
+opt=Adam(0.01)
 
-data = Flux.Data.DataLoader((trainX, trainY),batchsize=500, shuffle=false)
+data = Flux.Data.DataLoader((trainX, trainY),batchsize=1000, shuffle=false)
 loss_history = []
 
 epoch=1:50
@@ -99,7 +112,6 @@ println("Test loss:", loss(validationX, validationY))
 println("accuracy:",accuracy)
 
 println("Random example test:")
-println("X",testX[:,3])
 println("Y",testY[:,3])
 println("Y'",model(testX[:,3]))
 

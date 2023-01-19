@@ -18,7 +18,7 @@ y_test = pa.ipc.RecordBatchFileReader(test_Y_arrow).read_all().to_pandas().to_nu
 
 #model
 model = tf.keras.models.Sequential([
-   tf.keras.layers.Dense(9, activation='relu'),
+   tf.keras.layers.Dense(8, activation='relu'),
    tf.keras.layers.Dense(2, activation="softmax"),
 ])
 
@@ -36,11 +36,11 @@ print('y',sample_y)
 loss_fn = tf.losses.binary_crossentropy
 
 #optimize model
-opt = tf.keras.optimizers.Adam(learning_rate=0.05)
+opt = tf.keras.optimizers.Adam(learning_rate=0.01)
 model.compile(optimizer=opt, loss=loss_fn, metrics=['accuracy'])
 
 #train model
-model.fit(x_train, y_train,epochs=50, batch_size=500, validation_split=0.15)
+model.fit(x_train, y_train,epochs=50, batch_size=1000, validation_split=0.15)
 
 print(model.evaluate(x_test, y_test, verbose=2))
 
