@@ -5,16 +5,20 @@ df = DataFrame(CSV.File("../datasets/Myntra_Fasion_Clothing.csv")) |> dropmissin
 dfv = @view df[!,:]
 select!(dfv,[:BrandName,:Category,:Individual_category,:category_by_Gender])
 
-labelObs(df,feature::Symbol, bias::Float64) = @pipe groupby(df, feature) |> combine(_,nrow => :count)|> 
-subset(_,:count => ByRow( x -> x > 1))[:,feature] |> enumerate |> [(v => round(i * bias,digits=4)) for (i,v) in _ ] |> Dict
+labelObs(df,feature::Symbol, offset::Int) = @pipe groupby(df, feature) |> combine(_,nrow => :count) |> 
+_[:,feature] |> sort |> enumerate |> [(v => i + offset) for (i,v) in _ ] |> Dict
 
 getObsNoCart(dfv,feature::Symbol) = @pipe groupby(df, feature) |> combine(_,nrow => :count)|> subset(_,:count => ByRow( x -> x == 1))[!,feature]
 
 extractSortedLables(feature::Symbol) = @pipe groupby(df,feature) |> combine(_,nrow) |> _[:,1] |> sort!
 #Label obs to int
-brandLabels = extractSortedLables(:BrandName)
-categoryLables = extractSortedLables(:Category)
-subCategoryLabel = extractSortedLables(:Individual_category)
+offset = 0
+brandLabels = labelObs(df,:BrandName, offset)
+offset = maximum(brandLabels)[end]
+categoryLables = labelObs(df,:Category, offset)
+offset = maximum(categoryLables)[end]
+subCategoryLabel = labelObs(df,:Individual_category,offset)
+vocaburarySize = maximum(subCategoryLabel)[end]
 genderLabel = extractSortedLables(:category_by_Gender)
 
 removeBrandObs = getObsNoCart(dfv,:BrandName)
@@ -24,20 +28,10 @@ subset!(df,:BrandName => b -> map(x -> !(x in removeBrandObs), b))
 subset!(df,:Individual_category => b -> map(x -> !(x in removeIndCartObs), b))
 
 #select
-# dataset = transform!(df,:BrandName => n -> map(x -> brandLabels[x],n),:Category => n -> map(x -> categoryLables[x],n),:Individual_category => n -> map(x -> subCategoryLabel[x],n),renamecols = false)
-# dataset = transform!(df,:category_by_Gender =>ByRow( r-> onehot(r, ["Men","Women"]) .|> Float16) => [:Men,:Women],renamecols=true)
+dataset = transform!(df,:BrandName => n -> map(x -> brandLabels[x],n),:Category => n -> map(x -> categoryLables[x],n),:Individual_category => n -> map(x -> subCategoryLabel[x],n),renamecols = false)
+dataset = transform!(df,:category_by_Gender =>ByRow( r-> onehot(r, ["Men","Women"]) .|> Float16) => [:Men,:Women],renamecols=true)
+select!(df,Not(:category_by_Gender))
 
-
-transform!(df,:BrandName =>ByRow( r-> onehot(r, brandLabels) .|> Int8) => brandLabels,renamecols=true)
-transform!(df,:Category =>ByRow( r-> onehot(r, categoryLables) .|> Int8) => categoryLables,renamecols=true)
-transform!(df,:Individual_category =>ByRow( r-> onehot(r, subCategoryLabel) .|> Int8) => subCategoryLabel,renamecols=true)
-transform!(df,:category_by_Gender =>ByRow( r-> onehot(r, genderLabel) .|> Int8) => genderLabel,renamecols=true)
-
-df[:,end-5:end]
-
-
-df[1,14:end]
-select!(df,Not(1:4))
 describe(df)
 shuffled_ds = dataset[shuffle(1:nrow(dataset)),:]
 
@@ -78,17 +72,21 @@ Arrow.write("../datasets/testX.arrow", testDfX)
 Arrow.write("../datasets/testY.arrow", testDfY)
 
 #model
-model = Chain(Dense(1345=>8, relu),Dense(8=>2),softmax)
+model = Chain(Embedding(vocaburarySize => 4),Flux.flatten,Dense(12 => 12, relu),Dense(12=>2),softmax)
 
 ps=Flux.params(model)
 
 loss(x,y) = Flux.Losses.binarycrossentropy(model(x), y)
 
-
+trainY
+trainX
+loss(trainX, trainY)
+trainX[1:3,1:2]
+trainY[1:2,1]
 
 opt=Adam(0.01)
 
-data = Flux.Data.DataLoader((trainX, trainY),batchsize=1000, shuffle=false)
+data = Flux.Data.DataLoader((trainX, trainY),batchsize=500, shuffle=false)
 loss_history = []
 
 epoch=1:50
@@ -112,9 +110,6 @@ println("Test loss:", loss(validationX, validationY))
 println("accuracy:",accuracy)
 
 println("Random example test:")
+println("X",testX[1:3,3:3])
 println("Y",testY[:,3])
-println("Y'",model(testX[:,3]))
-
-x=[1,2,3,4,5,6,7,8,9,10]
-
-x[4:10]
+println("Y'",model(testX[1:3,3:3]))
